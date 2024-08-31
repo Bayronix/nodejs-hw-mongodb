@@ -1,19 +1,44 @@
 import express from 'express';
+import pino from 'pino-http';
+import cors from 'cors';
 
-const server = express();
+const PORT = 3001;
 
-const PORT = 3000;
+const setupServer = express();
 
-server.get('/', (request, response) => {
-  response.send('<h1>Home Page</h1>');
+const logger = pino({
+  transport: {
+    target: 'pino-pretty',
+  },
 });
 
-server.get('/contacts', (request, response) => {
-  response.send('<h1>Contacts</h1>');
+setupServer.use(logger());
+
+setupServer.use(cors());
+
+setupServer.use(express.json());
+
+setupServer.get('/', (req, res) => {
+  req.log.info('Root route accessed');
+  res.json({
+    message: `Server is running on port ${PORT}`,
+  });
 });
 
-server.listen(PORT, () => {
-  {
-    console.log(`Server started ${PORT}`);
-  }
+setupServer.use('*', (req, res, next) => {
+  res.status(404).json({
+    message: 'Not found',
+  });
+});
+
+setupServer.use((err, req, res, next) => {
+  req.log.error(err, 'Something went wrong');
+  res.status(500).json({
+    message: 'Something went wrong',
+    error: err.message,
+  });
+});
+
+setupServer.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
