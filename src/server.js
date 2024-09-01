@@ -1,18 +1,10 @@
 import express from 'express';
-import pino from 'pino-http';
+
 import cors from 'cors';
 
 const PORT = 3001;
 
 const setupServer = express();
-
-const logger = pino({
-  transport: {
-    target: 'pino-pretty',
-  },
-});
-
-setupServer.use(logger());
 
 setupServer.use(cors());
 
@@ -23,6 +15,12 @@ setupServer.get('/', (req, res) => {
   res.json({
     message: `Server is running on port ${PORT}`,
   });
+});
+
+setupServer.listen(PORT, () => {
+  {
+    console.log(`Server started ${PORT}`);
+  }
 });
 
 setupServer.use('*', (req, res, next) => {
@@ -37,8 +35,4 @@ setupServer.use((err, req, res, next) => {
     message: 'Something went wrong',
     error: err.message,
   });
-});
-
-setupServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
 });
