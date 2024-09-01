@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import pino from 'pino-http';
-import { env } from './utils/dovenv.js';
+import env from './utils/dovenv.js';
 
 const PORT = Number(env('PORT', 3001));
 
@@ -44,5 +44,3 @@ export const startServer = () => {
     });
   });
 };
-//
-startServer();
