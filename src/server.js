@@ -1,46 +1,71 @@
 import express from 'express';
 import cors from 'cors';
-import pino from 'pino-http';
-import env from './utils/dovenv.js';
+import mongoose from 'mongoose';
 
-const PORT = Number(env('PORT', 3001));
+import env from './utils/env.js';
+import * as contactServices from './services/contact.js';
 
 export const startServer = () => {
-  const setupServer = express();
+  const app = express();
 
-  setupServer.use(
-    pino({
-      transport: {
-        target: 'pino-pretty',
-      },
-    }),
-  );
+  app.use(cors());
+  app.use(express.json());
 
-  setupServer.use(cors());
-  setupServer.use(express.json());
-
-  setupServer.get('/', (req, res) => {
-    req.log.info('Root route accessed');
-    res.json({
-      message: `Server is running on port ${PORT}`,
-    });
+  app.get('/contacts', async (req, res, next) => {
+    try {
+      const data = await contactServices.getAllContacts();
+      res.json({
+        status: 200,
+        message: 'Successfully found contacts!',
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
   });
 
-  setupServer.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+  app.get('/contacts/:contactId', async (req, res, next) => {
+    try {
+      const { ContactId } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(ContactId)) {
+        return res.status(400).json({
+          message: `Invalid ContactId:${ContactId}`,
+        });
+      }
+
+      const data = await contactServices.getContactById(ContactId);
+
+      if (!data) {
+        return res.status(404).json({
+          message: `Contact with id=${ContactId} not found`,
+        });
+      }
+
+      res.json({
+        status: 200,
+        message: `Contact with id=${ContactId} successfully found`,
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
   });
 
-  setupServer.use('*', (req, res, next) => {
+  app.use((req, res) => {
     res.status(404).json({
-      message: 'Not found',
+      message: `${req.url} not found`,
     });
   });
 
-  setupServer.use((err, req, res, next) => {
-    req.log.error(err, 'Something went wrong');
+  app.use((error, req, res, next) => {
+    console.error(error);
     res.status(500).json({
-      message: 'Something went wrong',
-      error: err.message,
+      message: `Internal Server Error: ${error.message}`,
     });
   });
+
+  const port = Number(env('PORT', 3000));
+
+  app.listen(port, () => console.log(`Server running on port ${port}`));
 };
