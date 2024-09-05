@@ -3,7 +3,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 
 import env from './utils/env.js';
-import * as contactServices from './services/contact.js';
+import * as contactServices from './services/contacts.js';
 
 export const startServer = () => {
   const app = express();
